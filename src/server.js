@@ -42,8 +42,38 @@ app.get('/profile', (req, res) => {
   });
 });
 
-app.get('/login', (req, res) => {
-  res.status(501).send();
+app.get(`/login`, (req, res) => {
+  // define constants for the authorization request
+  const authorizationEndpoint = oidcProviderInfo[`authorization_endpoint`];
+  const responseType = `id_token`;
+  const scope = `openid`;
+  const clientID = process.env.CLIENT_ID;
+  const redirectUri = `http://localhost:3000/callback`;
+  const responseMode = `form_post`;
+  const nonce = crypto.randomBytes(16).toString(`hex`); // define a signed cookie containing the nonce value
+  const options = {
+    maxAge: 1000 * 60 * 15,
+    httpOnly: true, // The cookie only accessible by the web serveきのうのr
+    signed: true // Indicates if the cookie should be signed
+  };
+  // add cookie to the response and issue a 302 redirecting user
+  res
+    .cookie(nonceCookie, nonce, options)
+    .redirect(
+      authorizationEndpoint +
+        `?response_mode=` +
+        responseMode +
+        `&response_type=` +
+        responseType +
+        `&scope=` +
+        scope +
+        `&client_id=` +
+        clientID +
+        `&redirect_uri=` +
+        redirectUri +
+        `&nonce=` +
+        nonce
+    );
 });
 
 app.post('/callback', async (req, res) => {
@@ -58,6 +88,17 @@ app.get('/remove-to-do/:id', async (req, res) => {
   res.status(501).send();
 });
 
-app.listen(3000, () => {
-  console.log(`Server running on http://localhost:3000`);
-});
+const { OIDC_PROVIDER } = process.env;
+const discEnd = `https://${OIDC_PROVIDER}/.well-known/openid-configuration`;
+request(discEnd)
+  .then(res => {
+    oidcProviderInfo = JSON.parse(res);
+    app.listen(3000, () => {
+      console.log(`Server running on http://localhost:3000`);
+    });
+  })
+  .catch(error => {
+    console.error(error);
+    console.error(`Unable to get OIDC endpoints for ${OIDC_PROVIDER}`);
+    process.exit(1);
+  });
