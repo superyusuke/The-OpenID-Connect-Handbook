@@ -46,7 +46,7 @@ app.get(`/login`, (req, res) => {
   // define constants for the authorization request
   const authorizationEndpoint = oidcProviderInfo[`authorization_endpoint`];
   const responseType = `id_token`;
-  const scope = `openid`;
+  const scope = `openid profile email`;
   const clientID = process.env.CLIENT_ID;
   const redirectUri = `http://localhost:3000/callback`;
   const responseMode = `form_post`;
