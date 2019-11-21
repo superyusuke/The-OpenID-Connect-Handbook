@@ -80,9 +80,12 @@ app.post(`/callback`, async (req, res) => {
   // take nonce from cookie
   const nonce = req.signedCookies[nonceCookie];
   // delete nonce
-  delete req.signedCookies[nonceCookie]; // take ID Token posted by the user
-  const { id_token } = req.body; // decode token
-  const decodedToken = jwt.decode(id_token, { complete: true }); // get key id
+  delete req.signedCookies[nonceCookie];
+  // take ID Token posted by the user
+  const { id_token } = req.body;
+  // decode token
+  const decodedToken = jwt.decode(id_token, { complete: true });
+  // get key id
   const kid = decodedToken.header.kid;
   // get public key
   const client = jwksClient({
